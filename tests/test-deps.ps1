@@ -39,4 +39,10 @@ $cutoutDepsTestState.CpuFails = $true
 $failed = $false
 try { & $deps } catch { $failed = $true }
 Assert $failed 'Both dependency installs failing must stop the installer'
+
+# The fake CPU install above deliberately leaves $LASTEXITCODE at 1 to make
+# deps.ps1 throw. GitHub Actions' pwsh shell exits a step with $LASTEXITCODE
+# when it is left set, even though every assertion above passed - reset it so
+# this script's own success isn't reported as a failure.
+$global:LASTEXITCODE = 0
 Write-Host 'PASS: dependency setup tests'
