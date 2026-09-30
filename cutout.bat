@@ -2,8 +2,8 @@
 setlocal enabledelayedexpansion
 
 if "%~1"=="" (
-    echo Usage: removebg ^<image_file^>
-    echo Example: removebg c:/images/photo.jpg
+    echo Usage: cutout ^<image_file^>
+    echo Example: cutout c:/images/photo.jpg
     exit /b 1
 )
 
@@ -21,7 +21,7 @@ echo Input:  !IMAGE_FILE!
 echo Output: !OUTPUT_FILE!
 echo.
 
-rembg i -m birefnet-portrait "!IMAGE_FILE!" "!OUTPUT_FILE!"
+call rembg i -m birefnet-portrait "!IMAGE_FILE!" "!OUTPUT_FILE!"
 
 if errorlevel 1 (
     echo Error: Background removal failed

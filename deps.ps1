@@ -1,26 +1,29 @@
-# removebg/deps.ps1
-# Installs the rembg Python package (with GPU support if available).
-# Idempotent: checks if rembg is already importable before installing.
-
-Write-Host "  [removebg] Checking dependencies..." -ForegroundColor Cyan
-
-$installed = python -c "import rembg; print('ok')" 2>$null
-if ($installed -eq "ok") {
-    Write-Host "    OK  rembg is already installed" -ForegroundColor Green
-    return
+# Install the CLI extras as well as the inference backend, using the same Python.
+# Windows PowerShell turns native stderr into error records. Check exit codes
+# ourselves so a failed GPU install can reach the CPU fallback.
+$ErrorActionPreference = 'Continue'
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+    throw 'Install Python and pip and add them to PATH, then rerun install.ps1.'
 }
-
-Write-Host "    Installing rembg[gpu] via pip..." -ForegroundColor Yellow
-pip install "rembg[gpu]"
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "    rembg[gpu] install failed; trying rembg (CPU only)..." -ForegroundColor Yellow
-    pip install rembg
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "    ERROR: rembg installation failed. Make sure Python and pip are on your PATH." -ForegroundColor Red
-    } else {
-        Write-Host "    OK  rembg installed (CPU only)" -ForegroundColor Green
+Write-Host '  [cutout] Checking dependencies...' -ForegroundColor Cyan
+python -c "import rembg" 2>$null
+if ($LASTEXITCODE -eq 0 -and (Get-Command rembg -ErrorAction SilentlyContinue)) {
+    rembg --help *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host '    OK rembg CLI is already installed' -ForegroundColor Green
+        return
     }
-} else {
-    Write-Host "    OK  rembg[gpu] installed" -ForegroundColor Green
 }
+Write-Host '    Installing rembg[gpu,cli] via pip...' -ForegroundColor Yellow
+python -m pip install 'rembg[gpu,cli]'
+if ($LASTEXITCODE -ne 0) {
+    Write-Host '    GPU install failed; trying rembg[cpu,cli]...' -ForegroundColor Yellow
+    python -m pip install 'rembg[cpu,cli]'
+    if ($LASTEXITCODE -ne 0) { throw 'rembg installation failed. Check Python and pip.' }
+}
+if (-not (Get-Command rembg -ErrorAction SilentlyContinue)) {
+    throw 'rembg was installed, but its command is not on PATH. Add your Python Scripts folder and rerun.'
+}
+rembg --help *> $null
+if ($LASTEXITCODE -ne 0) { throw 'rembg CLI could not start. Check its dependencies.' }
+Write-Host '    OK rembg CLI installed' -ForegroundColor Green

@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Launcher and POSIX installer tests, without models
+        run: python -m unittest discover -s tests -v
+      - name: Parse every PowerShell script
+        shell: pwsh
+        run: ./tests/check-ps1.ps1
+      - name: Installer helper tests
+        shell: pwsh
+        run: ./tests/test-install.ps1
+      - name: Dependency setup tests, without downloads
+        shell: pwsh
+        run: ./tests/test-deps.ps1
+      - name: Bash syntax
+        if: runner.os == 'macOS'
+        run: bash -n cutout install.sh uninstall.sh
