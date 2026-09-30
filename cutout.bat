@@ -29,5 +29,5 @@ if errorlevel 1 (
 )
 
 echo.
-echo Background removal complete!
+echo Background removal complete^^!
 echo Output saved to: !OUTPUT_FILE!
